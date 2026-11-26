@@ -19,7 +19,7 @@
   </div>
 </section>
 <section class="stats-strip"><div><strong data-count="{{ stats.students }}">0</strong><span>Students</span></div><div><strong data-count="{{ stats.teachers }}">0</strong><span>Expert Teachers</span></div><div><strong data-count="{{ stats.courses }}">0</strong><span>Active Courses</span></div><div><strong data-count="{{ stats.classes }}">0</strong><span>Completed Classes</span></div></section>
-<section class="section"><div class="section-heading"><div><span class="kicker">Explore learning</span><h2>Popular subjects</h2></div><a href="{% url 'subject_list' %}">View all <i data-lucide="arrow-right"></i></a></div>
+<section class="section"><div class="section-heading"><div><span class="kicker">Explore Learning</span><h2>Popular Subjects</h2></div><a href="{% url 'subject_list' %}">View All <i data-lucide="arrow-right"></i></a></div>
   <div class="subject-grid">{% for subject in subjects %}<a class="subject-card" href="{% url 'subject_detail' subject.slug %}"><div class="subject-icon"><i data-lucide="{{ subject.icon }}"></i></div><strong>{{ subject.name }}</strong><span>{{ subject.category }}</span></a>{% empty %}<p>No subjects yet.</p>{% endfor %}</div>
 </section>
 <section class="section tint"><div class="section-heading"><div><span class="kicker">Learn from the best</span><h2>Featured teachers</h2></div><a href="{% url 'find_tutor' %}">Find a tutor <i data-lucide="arrow-right"></i></a></div>

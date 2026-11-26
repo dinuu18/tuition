@@ -23,8 +23,21 @@
     </form>
   </section>
 
+  <section class="editor-section" id="my-subjects">
+    <div class="editor-section-title"><div><span class="kicker">02 · Expertise</span><h2>My Subjects</h2></div></div>
+    <form method="post" class="manual-subject-form">{% csrf_token %}<input type="hidden" name="action" value="add_manual_subject">
+      <label for="manual-subject-name">Subject name</label>
+      <div class="manual-subject-input"><input id="manual-subject-name" name="subject_name" maxlength="100" placeholder="e.g. Mathematics or Coding" required><button class="btn primary" type="submit">Add Subject</button></div>
+    </form>
+    <div class="manual-subject-grid">
+      {% for subject in manual_subjects %}
+      <div class="manual-subject-card"><a href="{% url 'subject_detail' subject.slug %}"><i data-lucide="{{ subject.icon }}"></i><span>{{ subject.name }}</span></a><form method="post">{% csrf_token %}<input type="hidden" name="action" value="remove_manual_subject"><input type="hidden" name="subject_id" value="{{ subject.pk }}"><button class="text-button danger" type="submit" aria-label="Remove {{ subject.name }}">Remove</button></form></div>
+      {% empty %}<p class="editor-empty">You have not added any subjects yet.</p>{% endfor %}
+    </div>
+  </section>
+
   <section class="editor-section" id="subjects">
-    <div class="editor-section-title"><div><span class="kicker">02 · Expertise</span><h2>Subjects you teach</h2></div></div>
+    <div class="editor-section-title"><div><span class="kicker">Teaching details</span><h2>Subjects you teach</h2></div></div>
     {% for item in subject_items %}
     <div class="editor-item"><form method="post" class="editor-form compact">{% csrf_token %}<input type="hidden" name="action" value="update_subject"><input type="hidden" name="item_id" value="{{ item.pk }}">
       <div class="form-grid"><label>Subject<select name="subject" required>{% for option in subject_form.fields.subject.queryset %}<option value="{{ option.pk }}" {% if option.pk == item.subject_id %}selected{% endif %}>{{ option.name }}</option>{% endfor %}</select></label><label>Education level<select name="education_level">{% for value,label in subject_form.fields.education_level.choices %}<option value="{{ value }}" {% if value == item.education_level %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label></div>

@@ -48,6 +48,77 @@ class EdTechSmokeTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Mathematics")
 
+    def test_homepage_and_subject_list_show_all_active_subjects(self):
+        subjects = [
+            Subject.objects.create(name=f"Dynamic Subject {index}", category="School")
+            for index in range(10)
+        ]
+
+        homepage_response = self.client.get(reverse("home"))
+        list_response = self.client.get(reverse("subject_list"))
+
+        self.assertContains(homepage_response, subjects[-1].name)
+        self.assertContains(list_response, subjects[-1].name)
+        self.assertContains(homepage_response, "Explore Learning")
+        self.assertContains(homepage_response, "Popular Subjects")
+
+    def test_teacher_can_add_and_remove_manual_subjects(self):
+        user = User.objects.create_user("manual-subject-teacher", password="StrongPass123!")
+        UserProfile.objects.create(user=user, role="teacher")
+        teacher = TeacherProfile.objects.create(user=user)
+        self.client.force_login(user)
+
+        response = self.client.post(reverse("edit_profile"), {
+            "action": "add_manual_subject",
+            "subject_name": "   ",
+        }, follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Enter a subject name.")
+        self.assertFalse(Subject.objects.filter(name__iexact="").exists())
+
+        self.client.post(reverse("edit_profile"), {
+            "action": "add_manual_subject",
+            "subject_name": "mAtHeMaTiCs",
+        })
+        self.assertEqual(Subject.objects.filter(name__iexact="mathematics").count(), 1)
+        self.assertIn(self.subject, teacher.subjects.all())
+
+        self.client.post(reverse("edit_profile"), {
+            "action": "add_manual_subject",
+            "subject_name": "Biology",
+        })
+        subject = Subject.objects.get(name="Biology")
+        self.assertIn(subject, teacher.subjects.all())
+        self.assertContains(self.client.get(reverse("home")), "Biology")
+        self.assertContains(self.client.get(reverse("edit_profile")), "Add Subject")
+
+        duplicate_response = self.client.post(reverse("edit_profile"), {
+            "action": "add_manual_subject",
+            "subject_name": "bIoLoGy",
+        }, follow=True)
+        self.assertEqual(Subject.objects.filter(name__iexact="biology").count(), 1)
+        self.assertContains(duplicate_response, "already in My Subjects")
+
+        course = Course.objects.create(
+            title="Biology foundations",
+            description="An introductory biology course.",
+            subject=subject,
+            teacher=teacher,
+            price=100,
+        )
+        detail_response = self.client.get(reverse("subject_detail", args=[subject.slug]))
+        self.assertContains(detail_response, user.username)
+        self.assertContains(detail_response, course.title)
+
+        remove_response = self.client.post(reverse("edit_profile"), {
+            "action": "remove_manual_subject",
+            "subject_id": subject.pk,
+        })
+        self.assertRedirects(remove_response, reverse("edit_profile"))
+        self.assertFalse(teacher.subjects.filter(pk=subject.pk).exists())
+        self.assertTrue(Subject.objects.filter(pk=subject.pk).exists())
+        self.assertTrue(Course.objects.filter(pk=course.pk).exists())
+
     def test_find_tutor_filter(self):
         user = User.objects.create_user("teacher1", password="StrongPass123!")
         UserProfile.objects.create(user=user, role="teacher")

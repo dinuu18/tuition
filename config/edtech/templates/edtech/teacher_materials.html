@@ -1,0 +1,33 @@
+{% extends "edtech/base.html" %}
+{% block title %}Manage study materials — Tuition.com{% endblock %}
+{% block content %}
+<section class="teacher-editor">
+  <header class="editor-heading">
+    <div><span class="kicker">Learning resources</span><h1>Study materials</h1><p>Share lesson notes, worksheets, and useful links with students.</p></div>
+    <a class="btn secondary" href="{% url 'dashboard' %}">Back to dashboard</a>
+  </header>
+  <section class="editor-section">
+    <h2>Add a study material</h2>
+    <p class="form-help">Upload a file up to 25 MB, or add an external resource link.</p>
+    <form method="post" enctype="multipart/form-data" class="editor-form">{% csrf_token %}<input type="hidden" name="action" value="add_material">
+      {{ form.non_field_errors }}
+      <label>Title{{ form.title }}{{ form.title.errors }}</label>
+      <div class="form-grid"><label>Subject{{ form.subject }}{{ form.subject.errors }}</label><label>Class / grade (optional){{ form.grade }}{{ form.grade.errors }}</label></div>
+      <label>Description{{ form.description }}{{ form.description.errors }}</label>
+      <label>Upload a file{{ form.file }}{{ form.file.errors }}</label>
+      <span class="field-separator">or</span>
+      <label>External resource URL{{ form.external_url }}{{ form.external_url.errors }}</label>
+      <button class="btn primary" type="submit">Publish material</button>
+    </form>
+  </section>
+  <section class="editor-section">
+    <div class="editor-section-title"><div><span class="kicker">Your library</span><h2>Published materials</h2></div></div>
+    <div class="teacher-material-list">{% for material in materials %}
+      <article class="teacher-resource">
+        <div><span class="kicker">{{ material.subject.name }}{% if material.grade %} · {{ material.grade.name }}{% endif %}</span><h3>{{ material.title }}</h3>{% if material.description %}<p>{{ material.description }}</p>{% endif %}{% if material.file %}<a href="{{ material.file.url }}" target="_blank" rel="noopener noreferrer">Open uploaded file</a>{% elif material.external_url %}<a href="{{ material.external_url }}" target="_blank" rel="noopener noreferrer">Open external resource ↗</a>{% endif %}<small>Published {{ material.created_at|date:"d M Y" }}</small></div>
+        <form method="post">{% csrf_token %}<input type="hidden" name="action" value="delete_material"><input type="hidden" name="item_id" value="{{ material.pk }}"><button class="text-button danger" type="submit">Remove</button></form>
+      </article>
+    {% empty %}<p class="editor-empty">You haven’t published any study materials yet.</p>{% endfor %}</div>
+  </section>
+</section>
+{% endblock %}

@@ -1,0 +1,88 @@
+{% extends "edtech/base.html" %}
+{% block title %}Find a Tutor — Tuition.com{% endblock %}
+{% block content %}
+<section class="page-header"><div><span class="kicker">Expert guidance</span><h1>Find Your Perfect Tutor</h1></div></section>
+<section class="search-layout">
+  <aside class="filter-panel" id="filter-panel">
+    <form method="get">
+      <h2>Filters</h2>
+      <label for="tutor-search">Search</label><input id="tutor-search" name="q" value="{{ request.GET.q }}" placeholder="Name or qualification">
+      <label for="tutor-subject">Subject</label><select id="tutor-subject" name="subject"><option value="">All subjects</option>{% for item in subjects %}<option value="{{ item.pk }}" {% if request.GET.subject == item.pk|stringformat:'s' %}selected{% endif %}>{{ item.name }}</option>{% endfor %}</select>
+      <label for="tutor-grade">Class</label><select id="tutor-grade" name="grade"><option value="">All classes</option>{% for item in grades %}<option value="{{ item.pk }}" {% if request.GET.grade == item.pk|stringformat:'s' %}selected{% endif %}>{{ item.name }}</option>{% endfor %}</select>
+      <label for="tutor-board">Board</label><select id="tutor-board" name="board"><option value="">All boards</option>{% for item in boards %}<option value="{{ item.pk }}" {% if request.GET.board == item.pk|stringformat:'s' %}selected{% endif %}>{{ item.name }}</option>{% endfor %}</select>
+      <div class="form-grid">
+        <div><label for="tutor-min-fee">Minimum fee</label><input id="tutor-min-fee" name="min_fee" type="number" min="0" value="{{ request.GET.min_fee }}" inputmode="decimal"></div>
+        <div><label for="tutor-max-fee">Maximum fee</label><input id="tutor-max-fee" name="max_fee" type="number" min="0" value="{{ request.GET.max_fee }}" inputmode="decimal"></div>
+      </div>
+      <label for="tutor-experience">Minimum experience</label><input id="tutor-experience" name="experience" type="number" min="0" value="{{ request.GET.experience }}">
+      <label for="tutor-rating">Rating</label><select id="tutor-rating" name="rating"><option value="">Any rating</option><option value="4" {% if request.GET.rating == '4' %}selected{% endif %}>4+ stars</option><option value="3" {% if request.GET.rating == '3' %}selected{% endif %}>3+ stars</option></select>
+      <label class="check"><input type="checkbox" name="verified" value="1" {% if request.GET.verified %}checked{% endif %}> Verified only</label>
+      <label class="check"><input type="checkbox" name="available" value="1" {% if request.GET.available %}checked{% endif %}> Available now</label>
+      <label class="check"><input type="checkbox" name="online" value="1" {% if request.GET.online %}checked{% endif %}> Online</label>
+      <label class="check"><input type="checkbox" name="offline" value="1" {% if request.GET.offline %}checked{% endif %}> Offline</label>
+      <label class="check"><input type="checkbox" name="demo" value="1" {% if request.GET.demo %}checked{% endif %}> Free demo</label>
+      <button class="btn primary full" type="submit">Apply filters</button>
+      <a class="clear-link" href="{% url 'find_tutor' %}">Clear filters</a>
+    </form>
+  </aside>
+  <div class="results">
+    <div class="results-bar">
+      <strong>{{ page.paginator.count }} tutor{{ page.paginator.count|pluralize }} found</strong>
+      <form method="get" class="sort-form">
+        {% if request.GET.q %}<input type="hidden" name="q" value="{{ request.GET.q }}">{% endif %}
+        {% if request.GET.subject %}<input type="hidden" name="subject" value="{{ request.GET.subject }}">{% endif %}
+        {% if request.GET.grade %}<input type="hidden" name="grade" value="{{ request.GET.grade }}">{% endif %}
+        {% if request.GET.board %}<input type="hidden" name="board" value="{{ request.GET.board }}">{% endif %}
+        {% if request.GET.min_fee %}<input type="hidden" name="min_fee" value="{{ request.GET.min_fee }}">{% endif %}
+        {% if request.GET.max_fee %}<input type="hidden" name="max_fee" value="{{ request.GET.max_fee }}">{% endif %}
+        {% if request.GET.experience %}<input type="hidden" name="experience" value="{{ request.GET.experience }}">{% endif %}
+        {% if request.GET.rating %}<input type="hidden" name="rating" value="{{ request.GET.rating }}">{% endif %}
+        {% if request.GET.verified %}<input type="hidden" name="verified" value="{{ request.GET.verified }}">{% endif %}
+        {% if request.GET.available %}<input type="hidden" name="available" value="{{ request.GET.available }}">{% endif %}
+        {% if request.GET.online %}<input type="hidden" name="online" value="{{ request.GET.online }}">{% endif %}
+        {% if request.GET.offline %}<input type="hidden" name="offline" value="{{ request.GET.offline }}">{% endif %}
+        {% if request.GET.demo %}<input type="hidden" name="demo" value="{{ request.GET.demo }}">{% endif %}
+        <label class="sr-only" for="tutor-sort">Sort tutors</label>
+        <select id="tutor-sort" name="sort" onchange="this.form.submit()">
+          <option value="" {% if not request.GET.sort %}selected{% endif %}>Recommended</option>
+          <option value="lowest" {% if request.GET.sort == 'lowest' %}selected{% endif %}>Lowest price</option>
+          <option value="highest" {% if request.GET.sort == 'highest' %}selected{% endif %}>Highest price</option>
+          <option value="experienced" {% if request.GET.sort == 'experienced' %}selected{% endif %}>Most experienced</option>
+          <option value="recent" {% if request.GET.sort == 'recent' %}selected{% endif %}>Recently joined</option>
+        </select>
+      </form>
+    </div>
+    <div class="tutor-results">
+      {% for teacher in page %}
+      <article class="tutor-row">
+        {% if teacher.user.profile.profile_picture %}
+          <img class="profile-avatar small" src="{{ teacher.user.profile.profile_picture.url }}" alt="Profile picture of {{ teacher.user.get_full_name|default:teacher.user.username }}">
+        {% else %}
+          <div class="profile-avatar small" role="img" aria-label="Profile placeholder for {{ teacher.user.get_full_name|default:teacher.user.username }}">{{ teacher.user.first_name|slice:":1"|default:"T" }}</div>
+        {% endif %}
+        <div class="tutor-info">
+          <h2><a href="{% url 'public_teacher_profile' teacher.public_slug %}">{{ teacher.user.get_full_name|default:teacher.user.username }}</a>{% if teacher.verified %}<i data-lucide="badge-check" aria-label="Verified teacher"></i>{% endif %}</h2>
+          <p>{{ teacher.headline|default:"Expert tutor" }}</p>
+          <div class="chips">{% for subject in teacher.subjects.all|slice:':3' %}<span>{{ subject.name }}</span>{% empty %}<span>Subjects not listed</span>{% endfor %}</div>
+          <small>{{ teacher.experience_years }} years experience · {{ teacher.languages|default:"Language not listed" }}</small>
+          <div class="tutor-status-line">
+            {% if teacher.available %}<span class="available-badge"><i data-lucide="circle-check" aria-hidden="true"></i> Available</span>{% else %}<span class="unavailable-badge">Unavailable</span>{% endif %}
+            {% if teacher.free_demo %}<span>Free demo</span>{% endif %}
+          </div>
+        </div>
+        <div class="tutor-price"><span>From</span><strong>₹{{ teacher.hourly_fee|floatformat:"0" }}</strong><small>/ hour</small><a class="btn primary" href="{% url 'public_teacher_profile' teacher.public_slug %}">View Profile</a></div>
+      </article>
+      {% empty %}
+      <div class="empty-state"><i data-lucide="search-x" aria-hidden="true"></i><h2>No tutors found</h2><p>Try removing a filter or changing your search.</p><a class="btn secondary" href="{% url 'find_tutor' %}">Clear all filters</a></div>
+      {% endfor %}
+    </div>
+    {% if page.paginator.num_pages > 1 %}
+    <nav class="pagination" aria-label="Tutor result pages">
+      {% if page.has_previous %}<a href="?{% if query_string %}{{ query_string }}&amp;{% endif %}page={{ page.previous_page_number }}" rel="prev">Previous</a>{% endif %}
+      <span>Page {{ page.number }} of {{ page.paginator.num_pages }}</span>
+      {% if page.has_next %}<a href="?{% if query_string %}{{ query_string }}&amp;{% endif %}page={{ page.next_page_number }}" rel="next">Next</a>{% endif %}
+    </nav>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

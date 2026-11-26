@@ -1,0 +1,17 @@
+{% extends "edtech/base.html" %}
+{% block title %}Notifications — Tuition.com{% endblock %}
+{% block content %}
+<section class="student-page">
+  <header class="student-page-header"><div><span class="kicker">Updates from Tuition.com</span><h1>Notifications</h1><p>Booking requests, course updates, and messages about your learning.</p></div>
+    {% if notifications %}<form method="post">{% csrf_token %}<input type="hidden" name="action" value="mark_all_read"><button class="btn secondary" type="submit">Mark all as read</button></form>{% endif %}
+  </header>
+  <section class="student-panel">
+    {% for notification in notifications %}<article class="student-notification-row{% if not notification.read %} unread{% endif %}">
+      <span class="student-notification-icon"><i data-lucide="{% if notification.read %}bell{% else %}bell-ring{% endif %}" aria-hidden="true"></i></span>
+      <div><h2>{{ notification.title }}</h2><p>{{ notification.message }}</p><time datetime="{{ notification.created_at|date:'c' }}">{{ notification.created_at|date:"D, d M Y · h:i A" }}</time></div>
+      {% if not notification.read %}<form method="post">{% csrf_token %}<input type="hidden" name="action" value="mark_read"><input type="hidden" name="notification_id" value="{{ notification.pk }}"><button class="student-text-button" type="submit">Mark as read</button></form>{% endif %}
+    </article>{% empty %}<div class="student-empty"><i data-lucide="bell" aria-hidden="true"></i><strong>You’re all caught up</strong><p>New updates will appear here.</p></div>{% endfor %}
+    {% if notifications.has_other_pages %}<nav class="student-pagination" aria-label="Notification pages">{% if notifications.has_previous %}<a href="?page={{ notifications.previous_page_number }}">Previous</a>{% endif %}<span>Page {{ notifications.number }} of {{ notifications.paginator.num_pages }}</span>{% if notifications.has_next %}<a href="?page={{ notifications.next_page_number }}">Next</a>{% endif %}</nav>{% endif %}
+  </section>
+</section>
+{% endblock %}

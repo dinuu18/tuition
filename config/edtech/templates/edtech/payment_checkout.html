@@ -1,0 +1,82 @@
+{% extends "edtech/base.html" %}
+{% block title %}Secure checkout — {{ course.title }}{% endblock %}
+{% block content %}
+<section class="auth-page">
+  <div class="auth-card">
+    <span class="kicker">Secure course checkout</span>
+    <h1>Enroll in {{ course.title }}</h1>
+    <p>{{ course.description|truncatewords:24 }}</p>
+    <div class="chips">
+      <span>{{ course.subject.name }}</span>
+      <span>{{ payment.currency }} {{ payment.amount|floatformat:2 }}</span>
+    </div>
+    <form class="checkout-csrf" aria-hidden="true">{% csrf_token %}</form>
+    <button class="btn primary full" id="open-checkout" type="button">Continue to secure payment</button>
+    <p id="checkout-status" role="status" aria-live="polite"></p>
+    <a href="{% url 'course_detail' course.pk %}">Return to course</a>
+  </div>
+</section>
+{{ checkout_data|json_script:"checkout-data" }}
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+  (function () {
+    const data = JSON.parse(document.getElementById("checkout-data").textContent);
+    const button = document.getElementById("open-checkout");
+    const status = document.getElementById("checkout-status");
+    const csrfToken = document.querySelector("[name=csrfmiddlewaretoken]").value;
+
+    function showStatus(message) {
+      status.textContent = message;
+    }
+
+    if (typeof window.Razorpay !== "function") {
+      button.disabled = true;
+      showStatus("Secure checkout could not load. Check your connection and refresh this page.");
+      return;
+    }
+
+    const options = data.options;
+    options.handler = async function (paymentResponse) {
+      button.disabled = true;
+      showStatus("Payment received. Verifying it securely…");
+      try {
+        const response = await fetch(data.verify_url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": csrfToken
+          },
+          body: JSON.stringify({
+            transaction_id: data.transaction_id,
+            razorpay_order_id: paymentResponse.razorpay_order_id,
+            razorpay_payment_id: paymentResponse.razorpay_payment_id,
+            razorpay_signature: paymentResponse.razorpay_signature
+          })
+        });
+        const result = await response.json();
+        if (!response.ok) {
+          throw new Error(result.error || "Payment verification is still pending.");
+        }
+        window.location.assign(result.redirect_url);
+      } catch (error) {
+        showStatus(error.message + " Do not pay again; refresh the course page or contact support if access is not updated.");
+      }
+    };
+
+    const checkout = new window.Razorpay(options);
+    checkout.on("payment.failed", function (event) {
+      showStatus(event.error && event.error.description
+        ? event.error.description
+        : "Payment failed. You can try again.");
+    });
+    options.modal = {
+      ondismiss: function () {
+        showStatus("Checkout was closed. You can continue when ready.");
+      }
+    };
+    button.addEventListener("click", function () {
+      checkout.open();
+    });
+  })();
+</script>
+{% endblock %}

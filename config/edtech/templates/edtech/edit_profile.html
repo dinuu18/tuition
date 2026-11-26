@@ -1,0 +1,30 @@
+{% extends "edtech/base.html" %}
+{% block title %}Student profile — Tuition.com{% endblock %}
+{% block content %}
+<section class="student-settings-page">
+  <header class="student-settings-hero"><span class="kicker">Make learning yours</span><h1>Student profile</h1><p>Keep your contact details and learning preferences up to date.</p></header>
+  <div class="student-settings-layout">
+    <aside class="student-settings-aside">
+      {% if profile.profile_picture %}<img class="student-settings-avatar" src="{{ profile.profile_picture.url }}" alt="Current profile picture">{% else %}<div class="student-settings-avatar student-settings-avatar-fallback" aria-hidden="true">{{ user.first_name|slice:":1"|default:"S" }}</div>{% endif %}
+      <strong>{{ user.get_full_name|default:user.username }}</strong><span>Student account</span>
+      <nav aria-label="Profile settings"><a class="active" href="{% url 'edit_profile' %}">Personal details</a><a href="{% url 'student_teachers' %}">My teachers</a><a href="{% url 'student_bookings' %}">My bookings</a></nav>
+    </aside>
+    <form class="student-settings-form" method="post" enctype="multipart/form-data" novalidate>
+      {% csrf_token %}
+      <section><span class="kicker">Personal information</span><h2>About you</h2><p>These details help teachers recognize and contact you.</p>
+        {% for field in form %}
+          {% if field.name == "grade" %}<div class="student-settings-divider"><span class="kicker">Learning preferences</span><h2>Your learning profile</h2><p>Choose your current level and the subjects you want to focus on.</p></div>{% endif %}
+          {% if field.name == "guardian_name" %}<div class="student-settings-divider"><span class="kicker">Optional</span><h2>Parent or guardian</h2><p>Share guardian details if you would like them included in your learning profile.</p></div>{% endif %}
+          <div class="student-form-field{% if field.name == 'preferred_subjects' %} student-form-field-wide{% endif %}">
+            <label for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}
+            {% if field.help_text %}<small>{{ field.help_text }}</small>{% endif %}
+            {% for error in field.errors %}<span class="student-field-error">{{ error }}</span>{% endfor %}
+          </div>
+        {% endfor %}
+        {% if form.non_field_errors %}<div class="student-field-error" role="alert">{{ form.non_field_errors }}</div>{% endif %}
+      </section>
+      <div class="student-settings-actions"><a class="btn secondary" href="{% url 'dashboard' %}">Cancel</a><button class="btn primary" type="submit">Save changes</button></div>
+    </form>
+  </div>
+</section>
+{% endblock %}

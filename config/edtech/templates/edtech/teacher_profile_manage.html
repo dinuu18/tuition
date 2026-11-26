@@ -1,0 +1,96 @@
+{% extends "edtech/base.html" %}
+{% block title %}Manage professional profile — Tuition.com{% endblock %}
+{% block content %}
+<section class="teacher-editor">
+  <header class="editor-heading">
+    <div><span class="kicker">Your professional presence</span><h1>Build your teacher profile</h1><p>Help students understand your expertise, experience, and teaching style.</p></div>
+    <a class="btn secondary" href="{% url 'public_teacher_profile' teacher.public_slug %}" target="_blank" rel="noopener">View public profile</a>
+  </header>
+  <div class="completion-card"><div><strong>Profile strength</strong><span>{{ completion }}% complete</span></div><div class="completion-track"><b style="width:{{ completion }}%"></b></div></div>
+
+  <section class="editor-section" id="profile">
+    <div class="editor-section-title"><div><span class="kicker">01 · Introduction</span><h2>Professional profile</h2></div></div>
+    <form method="post" enctype="multipart/form-data" class="editor-form">{% csrf_token %}<input type="hidden" name="action" value="save_profile">
+      <div class="form-grid"><label>First name<input name="first_name" value="{{ user.first_name }}" required></label><label>Last name<input name="last_name" value="{{ user.last_name }}"></label></div>
+      <div class="form-grid"><label>Email<input type="email" name="email" value="{{ user.email }}" required></label><label>Contact number<input name="phone" value="{{ profile.phone }}"></label></div>
+      <label>Professional headline<input name="headline" maxlength="180" value="{{ teacher.headline }}" placeholder="Mathematics Teacher | 5+ Years Experience"></label>
+      <label>About me<textarea name="biography" rows="5" placeholder="Share your teaching philosophy and what students can expect.">{{ teacher.biography }}</textarea></label>
+      <div class="form-grid"><label>Education & qualifications<input name="qualifications" value="{{ teacher.qualifications }}" placeholder="M.Sc. Mathematics, B.Ed."></label><label>College / university<input name="college" value="{{ teacher.college }}"></label></div>
+      <div class="form-grid"><label>Current location<input name="location" value="{{ teacher.location }}" placeholder="City, State"></label><label>Total teaching experience (years)<input type="number" min="0" name="experience_years" value="{{ teacher.experience_years }}"></label></div>
+      <div class="form-grid"><label>Profile picture<input type="file" name="profile_picture" accept="image/jpeg,image/png,image/webp">{% if profile.profile_picture %}<small>Current picture saved</small>{% endif %}</label><label>Cover / banner image<input type="file" name="cover_image" accept="image/jpeg,image/png,image/webp">{% if teacher.cover_image %}<small>Current cover saved</small>{% endif %}</label></div>
+      <label>Hourly fee (₹)<input type="number" min="0" step="0.01" name="hourly_fee" value="{{ teacher.hourly_fee }}"></label>
+      <button class="btn primary" type="submit">Save profile changes</button>
+    </form>
+  </section>
+
+  <section class="editor-section" id="subjects">
+    <div class="editor-section-title"><div><span class="kicker">02 · Expertise</span><h2>Subjects you teach</h2></div></div>
+    {% for item in subject_items %}
+    <div class="editor-item"><form method="post" class="editor-form compact">{% csrf_token %}<input type="hidden" name="action" value="update_subject"><input type="hidden" name="item_id" value="{{ item.pk }}">
+      <div class="form-grid"><label>Subject<select name="subject" required>{% for option in subject_form.fields.subject.queryset %}<option value="{{ option.pk }}" {% if option.pk == item.subject_id %}selected{% endif %}>{{ option.name }}</option>{% endfor %}</select></label><label>Education level<select name="education_level">{% for value,label in subject_form.fields.education_level.choices %}<option value="{{ value }}" {% if value == item.education_level %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label></div>
+      <div class="form-grid"><label>Classes / standards<input name="classes" value="{{ item.classes }}" placeholder="Class 8–10"></label><label>Teaching mode<select name="teaching_mode">{% for value,label in subject_form.fields.teaching_mode.choices %}<option value="{{ value }}" {% if value == item.teaching_mode %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label></div>
+      <label>Experience teaching this subject (years)<input type="number" min="0" name="experience_years" value="{{ item.experience_years }}"></label><button class="btn secondary" type="submit">Update subject</button>
+    </form><form method="post" class="inline-delete">{% csrf_token %}<input type="hidden" name="action" value="delete_subject"><input type="hidden" name="item_id" value="{{ item.pk }}"><input type="hidden" name="subject_id" value="{{ item.subject_id }}"><button class="text-button danger" type="submit">Remove</button></form></div>
+    {% empty %}<p class="editor-empty">Add the subjects and levels you specialize in.</p>{% endfor %}
+    <details class="editor-add"><summary>＋ Add a subject</summary><form method="post" class="editor-form">{% csrf_token %}<input type="hidden" name="action" value="add_subject">
+      <div class="form-grid"><label>Subject{{ subject_form.subject }}</label><label>Education level{{ subject_form.education_level }}</label></div>
+      <div class="form-grid"><label>Classes / standards{{ subject_form.classes }}</label><label>Teaching mode{{ subject_form.teaching_mode }}</label></div>
+      <label>Experience teaching this subject{{ subject_form.experience_years }}</label><button class="btn primary" type="submit">Add subject</button>
+    </form></details>
+  </section>
+
+  <section class="editor-section" id="experience">
+    <div class="editor-section-title"><div><span class="kicker">03 · Career</span><h2>Professional experience</h2></div></div>
+    {% for item in experiences %}
+    <div class="editor-item"><form method="post" class="editor-form compact">{% csrf_token %}<input type="hidden" name="action" value="update_experience"><input type="hidden" name="item_id" value="{{ item.pk }}">
+      <div class="form-grid"><label>Job title<input name="job_title" value="{{ item.job_title }}" required></label><label>School / institute<input name="organization" value="{{ item.organization }}" required></label></div>
+      <div class="form-grid"><label>Employment type<select name="employment_type">{% for value,label in experience_form.fields.employment_type.choices %}<option value="{{ value }}" {% if value == item.employment_type %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label><label>Start date<input type="date" name="start_date" value="{{ item.start_date|date:'Y-m-d' }}" required></label></div>
+      <div class="form-grid"><label>End date<input type="date" name="end_date" value="{{ item.end_date|date:'Y-m-d' }}"></label><label class="check-line"><input type="checkbox" name="currently_working" {% if item.currently_working %}checked{% endif %}> Currently working here</label></div>
+      <label>Teaching responsibilities<textarea name="responsibilities" rows="3">{{ item.responsibilities }}</textarea></label><button class="btn secondary" type="submit">Update experience</button>
+    </form><form method="post" class="inline-delete">{% csrf_token %}<input type="hidden" name="action" value="delete_experience"><input type="hidden" name="item_id" value="{{ item.pk }}"><button class="text-button danger" type="submit">Remove</button></form></div>
+    {% empty %}<p class="editor-empty">Add your current and previous teaching roles.</p>{% endfor %}
+    <details class="editor-add"><summary>＋ Add professional experience</summary><form method="post" class="editor-form">{% csrf_token %}<input type="hidden" name="action" value="add_experience">
+      <div class="form-grid"><label>Job title{{ experience_form.job_title }}</label><label>School / institute{{ experience_form.organization }}</label></div>
+      <div class="form-grid"><label>Employment type{{ experience_form.employment_type }}</label><label>Start date{{ experience_form.start_date }}</label></div>
+      <div class="form-grid"><label>End date{{ experience_form.end_date }}</label><label class="check-line">{{ experience_form.currently_working }} Currently working here</label></div>
+      <label>Teaching responsibilities{{ experience_form.responsibilities }}</label><button class="btn primary" type="submit">Add experience</button>
+    </form></details>
+  </section>
+
+  <section class="editor-section" id="achievements">
+    <div class="editor-section-title"><div><span class="kicker">04 · Recognition</span><h2>Achievements & certifications</h2></div></div>
+    {% for item in achievements %}
+    <div class="editor-item"><form method="post" enctype="multipart/form-data" class="editor-form compact">{% csrf_token %}<input type="hidden" name="action" value="update_achievement"><input type="hidden" name="item_id" value="{{ item.pk }}">
+      <div class="form-grid"><label>Achievement title<input name="title" value="{{ item.title }}" required></label><label>Certificate name<input name="certificate_name" value="{{ item.certificate_name }}"></label></div>
+      <div class="form-grid"><label>Issuing organization<input name="issuing_organization" value="{{ item.issuing_organization }}"></label><label>Issue date<input type="date" name="issue_date" value="{{ item.issue_date|date:'Y-m-d' }}"></label></div>
+      <label>Award / accomplishment details<textarea name="description" rows="3">{{ item.description }}</textarea></label><label>Certificate image or PDF<input type="file" name="certificate_file" accept="image/*,application/pdf">{% if item.certificate_file %}<a href="{{ item.certificate_file.url }}" target="_blank" rel="noopener">View current certificate</a>{% endif %}</label><button class="btn secondary" type="submit">Update achievement</button>
+    </form><form method="post" class="inline-delete">{% csrf_token %}<input type="hidden" name="action" value="delete_achievement"><input type="hidden" name="item_id" value="{{ item.pk }}"><button class="text-button danger" type="submit">Remove</button></form></div>
+    {% empty %}<p class="editor-empty">Showcase awards, workshops, training, and professional accomplishments.</p>{% endfor %}
+    <details class="editor-add"><summary>＋ Add achievement or certification</summary><form method="post" enctype="multipart/form-data" class="editor-form">{% csrf_token %}<input type="hidden" name="action" value="add_achievement">
+      <div class="form-grid"><label>Achievement title{{ achievement_form.title }}</label><label>Certificate name{{ achievement_form.certificate_name }}</label></div>
+      <div class="form-grid"><label>Issuing organization{{ achievement_form.issuing_organization }}</label><label>Issue date{{ achievement_form.issue_date }}</label></div>
+      <label>Award / accomplishment details{{ achievement_form.description }}</label><label>Certificate image or PDF{{ achievement_form.certificate_file }}</label><button class="btn primary" type="submit">Add achievement</button>
+    </form></details>
+  </section>
+
+  <section class="editor-section" id="skills">
+    <div class="editor-section-title"><div><span class="kicker">05 · Strengths</span><h2>Skills & expertise</h2></div></div>
+    <div class="skill-list">{% for skill in skills %}<div class="skill-tag">{{ skill.name }}<form method="post">{% csrf_token %}<input type="hidden" name="action" value="delete_skill"><input type="hidden" name="item_id" value="{{ skill.pk }}"><button type="submit" aria-label="Remove {{ skill.name }}">×</button></form></div>{% empty %}<p class="editor-empty">Add skills such as classroom management, mentoring, or lesson planning.</p>{% endfor %}</div>
+    <form method="post" class="skill-add">{% csrf_token %}<input type="hidden" name="action" value="add_skill"><label class="sr-only" for="skill-name">New skill</label><input id="skill-name" name="skill_name" maxlength="60" placeholder="Add a skill, e.g. Student mentoring" required><button class="btn primary" type="submit">Add skill</button></form>
+  </section>
+
+  <section class="editor-section" id="portfolio">
+    <div class="editor-section-title"><div><span class="kicker">06 · Your work</span><h2>Teaching portfolio</h2></div></div>
+    {% for item in portfolio_items %}
+    <div class="editor-item"><form method="post" enctype="multipart/form-data" class="editor-form compact">{% csrf_token %}<input type="hidden" name="action" value="update_portfolio"><input type="hidden" name="item_id" value="{{ item.pk }}">
+      <div class="form-grid"><label>Title<input name="title" value="{{ item.title }}" required></label><label>Portfolio type<select name="item_type">{% for value,label in portfolio_form.fields.item_type.choices %}<option value="{{ value }}" {% if value == item.item_type %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label></div>
+      <label>Description<textarea name="description" rows="3">{{ item.description }}</textarea></label><label>Video or resource URL<input type="url" name="url" value="{{ item.url }}"></label><label>Upload a file<input type="file" name="file">{% if item.file %}<a href="{{ item.file.url }}" target="_blank" rel="noopener">View current file</a>{% endif %}</label><button class="btn secondary" type="submit">Update portfolio item</button>
+    </form><form method="post" class="inline-delete">{% csrf_token %}<input type="hidden" name="action" value="delete_portfolio"><input type="hidden" name="item_id" value="{{ item.pk }}"><button class="text-button danger" type="submit">Remove</button></form></div>
+    {% empty %}<p class="editor-empty">Share demo lectures, educational projects, study materials, and student success stories.</p>{% endfor %}
+    <details class="editor-add"><summary>＋ Add portfolio item</summary><form method="post" enctype="multipart/form-data" class="editor-form">{% csrf_token %}<input type="hidden" name="action" value="add_portfolio">
+      <div class="form-grid"><label>Title{{ portfolio_form.title }}</label><label>Portfolio type{{ portfolio_form.item_type }}</label></div>
+      <label>Description{{ portfolio_form.description }}</label><label>Video or resource URL{{ portfolio_form.url }}</label><label>Upload a file{{ portfolio_form.file }}</label><button class="btn primary" type="submit">Add to portfolio</button>
+    </form></details>
+  </section>
+</section>
+{% endblock %}

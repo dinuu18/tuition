@@ -1,0 +1,52 @@
+{% extends "edtech/base.html" %}
+{% block content %}
+<section class="hero">
+  <div class="hero-copy reveal">
+    <span class="eyebrow"><i data-lucide="sparkles"></i> Live & personalized learning</span>
+    <h1>Learn Today.<br><span>Lead Tomorrow.</span></h1>
+    <p>Find expert teachers, live classes and study resources designed for your goals.</p>
+    <form class="hero-search" action="{% url 'find_tutor' %}" method="get">
+      <i data-lucide="search"></i><input name="q" placeholder="Search subject, teacher or course">
+      <button type="submit">Find Tutor</button>
+    </form>
+    <div class="hero-actions"><a class="btn primary" href="{% url 'find_tutor' %}">Find Your Tutor</a><a class="btn secondary" href="{% url 'register' role='teacher' %}">Become a Teacher</a></div>
+  </div>
+  <div class="hero-visual reveal">
+    <div class="orbit orbit-one"></div><div class="orbit orbit-two"></div>
+    <div class="hero-card lesson-card"><div class="live-dot">● LIVE</div><div class="avatar-lg">DW</div><strong>Concept mastery</strong><span>Today, 4:00 PM</span></div>
+    <div class="hero-card score-card"><i data-lucide="trophy"></i><strong>95%</strong><span>Quiz score</span></div>
+    <div class="hero-card teacher-card"><div class="teacher-avatars">A <b>M</b> <span>+12</span></div><strong>1-on-1 support</strong></div>
+  </div>
+</section>
+<section class="stats-strip"><div><strong data-count="{{ stats.students }}">0</strong><span>Students</span></div><div><strong data-count="{{ stats.teachers }}">0</strong><span>Expert Teachers</span></div><div><strong data-count="{{ stats.courses }}">0</strong><span>Active Courses</span></div><div><strong data-count="{{ stats.classes }}">0</strong><span>Completed Classes</span></div></section>
+<section class="section"><div class="section-heading"><div><span class="kicker">Explore learning</span><h2>Popular subjects</h2></div><a href="{% url 'subject_list' %}">View all <i data-lucide="arrow-right"></i></a></div>
+  <div class="subject-grid">{% for subject in subjects %}<a class="subject-card" href="{% url 'subject_detail' subject.slug %}"><div class="subject-icon"><i data-lucide="{{ subject.icon }}"></i></div><strong>{{ subject.name }}</strong><span>{{ subject.category }}</span></a>{% empty %}<p>No subjects yet.</p>{% endfor %}</div>
+</section>
+<section class="section tint"><div class="section-heading"><div><span class="kicker">Learn from the best</span><h2>Featured teachers</h2></div><a href="{% url 'find_tutor' %}">Find a tutor <i data-lucide="arrow-right"></i></a></div>
+  <div class="card-grid">
+    {% for teacher in teachers %}
+    <article class="teacher-profile-card">
+      <div class="profile-cover"></div>
+      {% if teacher.user.profile.profile_picture %}
+        <img class="profile-avatar" src="{{ teacher.user.profile.profile_picture.url }}" alt="Profile picture of {{ teacher.user.get_full_name|default:teacher.user.username }}">
+      {% else %}
+        <div class="profile-avatar" role="img" aria-label="Profile placeholder for {{ teacher.user.get_full_name|default:teacher.user.username }}">{{ teacher.user.first_name|slice:":1"|default:"T" }}</div>
+      {% endif %}
+      <div class="teacher-badges">
+        {% if teacher.verified %}<span class="verified"><i data-lucide="badge-check"></i> Verified</span>{% endif %}
+        {% if teacher.available %}<span class="available-badge"><i data-lucide="circle-check"></i> Available</span>{% endif %}
+      </div>
+      <h3>{{ teacher.user.get_full_name|default:teacher.user.username }}</h3>
+      <p>{{ teacher.headline|default:"Experienced subject expert" }}</p>
+      <div class="chips">{% for subject in teacher.subjects.all|slice:':3' %}<span>{{ subject.name }}</span>{% empty %}<span>Subject available</span>{% endfor %}</div>
+      <div class="rating"><i data-lucide="star"></i> {{ teacher.rating|floatformat:1 }} <span>({{ teacher.review_count }} reviews)</span></div>
+      <div class="card-meta"><span>{{ teacher.experience_years }} yrs exp.</span><strong>₹{{ teacher.hourly_fee|floatformat:"0" }}/hr</strong></div>
+      <a class="btn primary full" href="{% url 'public_teacher_profile' teacher.public_slug %}">View Profile</a>
+    </article>
+    {% empty %}<div class="empty-state">Featured teachers will appear after approval.</div>{% endfor %}
+  </div>
+</section>
+<section class="section"><div class="section-heading"><div><span class="kicker">Curated for you</span><h2>Trending courses</h2></div></div>
+  <div class="card-grid">{% for course in courses %}<article class="course-card"><div class="course-art"><i data-lucide="graduation-cap"></i><span>{{ course.level }}</span></div><div class="course-body"><small>{{ course.subject.name }}</small><h3>{{ course.title }}</h3><p>by {{ course.teacher.user.get_full_name|default:course.teacher.user.username }}</p><div class="course-footer"><strong>₹{{ course.discount_price|default:course.price }}</strong><a href="{% url 'course_detail' course.pk %}">View course</a></div></div></article>{% empty %}<div class="empty-state">Courses will appear here soon.</div>{% endfor %}</div>
+</section>
+{% endblock %}

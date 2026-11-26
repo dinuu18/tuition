@@ -1,0 +1,23 @@
+{% extends "edtech/base.html" %}
+{% block title %}Book a demo with {{ teacher.user.get_full_name|default:teacher.user.username }}{% endblock %}
+{% block content %}
+<section class="auth-page">
+  <div class="auth-card">
+    <span class="kicker">Free demo</span>
+    <h1>Book {{ teacher.user.get_full_name|default:teacher.user.username }}</h1>
+    {% if availability %}
+      <p class="form-help">Choose a 60-minute start time within one of these available windows:</p>
+      <ul class="availability-list">{% for window in availability %}<li>{{ window.starts_at|date:"D, d M Y · h:i A" }} – {{ window.ends_at|date:"h:i A" }}</li>{% endfor %}</ul>
+      <form method="post" class="booking-form">{% csrf_token %}
+        {{ form.non_field_errors }}
+        <label for="{{ form.subject.id_for_label }}">Subject{{ form.subject }}</label>{{ form.subject.errors }}
+        <label for="{{ form.starts_at.id_for_label }}">Date and time{{ form.starts_at }}</label>{{ form.starts_at.errors }}
+        <button class="btn primary full" type="submit">Request Free Demo</button>
+      </form>
+    {% else %}
+      <p>This teacher has not added any upcoming availability yet. Please check back later or send an enquiry from their profile.</p>
+      <a class="btn secondary full" href="{% url 'public_teacher_profile' teacher.public_slug %}">Back to teacher profile</a>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

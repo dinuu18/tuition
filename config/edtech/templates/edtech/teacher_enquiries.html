@@ -1,0 +1,27 @@
+{% extends "edtech/base.html" %}
+{% block title %}Student enquiries — Tuition.com{% endblock %}
+{% block content %}
+<section class="teacher-editor">
+  <header class="editor-heading"><div><span class="kicker">Student messages</span><h1>Your enquiries</h1><p>Read messages sent from your public teacher profile and reply directly to students.</p></div><a class="btn secondary" href="{% url 'dashboard' %}">Back to dashboard</a></header>
+  <section class="editor-section">
+    {% for enquiry in enquiries %}
+      <article class="inquiry-card">
+        <div class="inquiry-heading"><div><h2>{{ enquiry.name }}</h2><a href="mailto:{{ enquiry.email }}">{{ enquiry.email }}</a>{% if enquiry.sender %}<span>Registered student: {{ enquiry.sender.get_full_name|default:enquiry.sender.username }}</span>{% endif %}</div><time>{{ enquiry.created_at|date:"D, d M Y · h:i A" }}</time></div>
+        <p>{{ enquiry.message|linebreaksbr }}</p>
+        {% if enquiry.reply_message %}
+          <div class="inquiry-reply"><strong>Reply sent{% if enquiry.replied_at %} · {{ enquiry.replied_at|date:"D, d M Y · h:i A" }}{% endif %}</strong><p>{{ enquiry.reply_message|linebreaksbr }}</p></div>
+        {% else %}
+          <form class="enquiry-reply-form" method="post">
+            {% csrf_token %}
+            <input type="hidden" name="enquiry_id" value="{{ enquiry.pk }}">
+            <label for="reply-{{ enquiry.pk }}">Reply to {{ enquiry.name }}</label>
+            <textarea id="reply-{{ enquiry.pk }}" name="reply_message" rows="4" required></textarea>
+            <button class="btn primary" type="submit">Send reply</button>
+          </form>
+        {% endif %}
+      </article>
+    {% empty %}<div class="empty-state">You haven’t received any student enquiries yet.</div>{% endfor %}
+    {% if enquiries.has_other_pages %}<nav class="pagination" aria-label="Enquiry pages">{% if enquiries.has_previous %}<a href="?page={{ enquiries.previous_page_number }}">Previous</a>{% endif %}<span>Page {{ enquiries.number }} of {{ enquiries.paginator.num_pages }}</span>{% if enquiries.has_next %}<a href="?page={{ enquiries.next_page_number }}">Next</a>{% endif %}</nav>{% endif %}
+  </section>
+</section>
+{% endblock %}

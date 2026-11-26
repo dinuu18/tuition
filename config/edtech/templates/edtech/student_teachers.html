@@ -1,0 +1,31 @@
+{% extends "edtech/base.html" %}
+{% block title %}My teachers — Tuition.com{% endblock %}
+{% block content %}
+<section class="student-page">
+  <header class="student-page-header"><div><span class="kicker">Your learning network</span><h1>My teachers</h1><p>Teachers you have saved or learned with are collected here.</p></div><a class="btn primary" href="{% url 'find_tutor' %}">Find a tutor</a></header>
+  <section class="student-panel">
+    <div class="student-panel-heading"><div><span class="kicker">Keep close</span><h2>Saved teachers</h2></div><span>{{ favorites|length }} saved</span></div>
+    <div class="student-teacher-grid">
+      {% for favorite in favorites %}<article class="student-teacher-card">
+        <div class="student-teacher-avatar">{% if favorite.teacher.user.profile.profile_picture %}<img src="{{ favorite.teacher.user.profile.profile_picture.url }}" alt="">{% else %}{{ favorite.teacher.user.first_name|slice:":1"|default:"T" }}{% endif %}</div>
+        <div class="student-teacher-copy"><h3>{{ favorite.teacher.user.get_full_name|default:favorite.teacher.user.username }}</h3><p>{{ favorite.teacher.headline|default:"Professional teacher" }}</p><span>{{ favorite.teacher.location|default:"Location not listed" }}</span></div>
+        <a class="btn secondary" href="{% url 'public_teacher_profile' favorite.teacher.public_slug %}">View profile</a>
+        <form method="post" action="{% url 'start_chat' favorite.teacher.pk %}">{% csrf_token %}<button class="btn primary" type="submit"><i data-lucide="message-circle" aria-hidden="true"></i>Chat</button></form>
+        <form method="post" action="{% url 'favorite_teacher' favorite.teacher.pk %}">{% csrf_token %}<button class="student-text-button" type="submit">Remove saved teacher</button></form>
+      </article>
+      {% empty %}<div class="student-empty"><i data-lucide="heart" aria-hidden="true"></i><strong>No saved teachers yet</strong><p>Save teachers you are interested in to find them quickly later.</p><a class="btn secondary" href="{% url 'find_tutor' %}">Explore teachers</a></div>{% endfor %}
+    </div>
+  </section>
+  <section class="student-panel">
+    <div class="student-panel-heading"><div><span class="kicker">Your classes</span><h2>Teachers you have connected with</h2></div></div>
+    <div class="student-teacher-grid">
+      {% for teacher in connected_teachers %}<article class="student-teacher-card">
+        <div class="student-teacher-avatar">{% if teacher.user.profile.profile_picture %}<img src="{{ teacher.user.profile.profile_picture.url }}" alt="">{% else %}{{ teacher.user.first_name|slice:":1"|default:"T" }}{% endif %}</div>
+        <div class="student-teacher-copy"><h3>{{ teacher.user.get_full_name|default:teacher.user.username }}</h3><p>{{ teacher.headline|default:"Professional teacher" }}</p><span>{{ teacher.location|default:"Location not listed" }}</span></div>
+        <a class="btn secondary" href="{% url 'public_teacher_profile' teacher.public_slug %}">View profile</a>
+        <form method="post" action="{% url 'start_chat' teacher.pk %}">{% csrf_token %}<button class="btn primary" type="submit"><i data-lucide="message-circle" aria-hidden="true"></i>Chat</button></form>
+      </article>{% empty %}<div class="student-empty compact"><p>Your teachers from classes and courses will appear here.</p></div>{% endfor %}
+    </div>
+  </section>
+</section>
+{% endblock %}

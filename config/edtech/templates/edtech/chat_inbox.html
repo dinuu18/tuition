@@ -1,0 +1,29 @@
+{% extends "edtech/base.html" %}
+{% block title %}Chats — Tuition.com{% endblock %}
+{% block content %}
+<section class="teacher-editor chat-page">
+  <header class="editor-heading">
+    <div><span class="kicker">Your conversations</span><h1>Chats</h1><p>Message students and teachers directly on Tuition.com.</p></div>
+    {% if role == "student" %}<a class="btn secondary" href="{% url 'student_teachers' %}">My teachers</a>{% else %}<a class="btn secondary" href="{% url 'dashboard' %}">Back to dashboard</a>{% endif %}
+  </header>
+  <section class="editor-section chat-inbox-list" aria-label="Conversations">
+    {% for conversation in conversations %}
+      {% if role == "teacher" %}{% with participant=conversation.student %}
+        <a class="chat-inbox-row" href="{% url 'chat_conversation' conversation.pk %}">
+          <span class="student-chat-avatar" aria-hidden="true">{{ participant.first_name|slice:":1"|default:"S" }}</span>
+          <span><strong>{{ participant.get_full_name|default:participant.username }}</strong><small>Conversation updated {{ conversation.updated_at|timesince }} ago</small></span>
+          <i data-lucide="arrow-up-right" aria-hidden="true"></i>
+        </a>
+      {% endwith %}{% else %}{% with participant=conversation.teacher.user %}
+        <a class="chat-inbox-row" href="{% url 'chat_conversation' conversation.pk %}">
+          <span class="student-chat-avatar" aria-hidden="true">{{ participant.first_name|slice:":1"|default:"T" }}</span>
+          <span><strong>{{ participant.get_full_name|default:participant.username }}</strong><small>Conversation updated {{ conversation.updated_at|timesince }} ago</small></span>
+          <i data-lucide="arrow-up-right" aria-hidden="true"></i>
+        </a>
+      {% endwith %}{% endif %}
+    {% empty %}
+      <div class="student-empty"><i data-lucide="messages-square" aria-hidden="true"></i><strong>No chats yet</strong><p>{% if role == "student" %}Choose Chat beside a saved or connected teacher to start a conversation.{% else %}When a student starts a chat, it will appear here.{% endif %}</p>{% if role == "student" %}<a class="btn secondary" href="{% url 'student_teachers' %}">My teachers</a>{% endif %}</div>
+    {% endfor %}
+  </section>
+</section>
+{% endblock %}

@@ -1,0 +1,15 @@
+{% extends "edtech/base.html" %}
+{% block title %}My bookings — Tuition.com{% endblock %}
+{% block content %}
+<section class="student-page">
+  <header class="student-page-header"><div><span class="kicker">Class schedule</span><h1>My bookings</h1><p>Review upcoming requests and your past tutoring sessions.</p></div><a class="btn primary" href="{% url 'find_tutor' %}">Book a class</a></header>
+  <section class="student-panel">
+    {% for booking in bookings %}<article class="student-booking-row student-booking-history">
+      <div class="student-date-tile"><strong>{{ booking.starts_at|date:"d" }}</strong><span>{{ booking.starts_at|date:"M" }}</span></div>
+      <div class="student-booking-info"><strong>{{ booking.subject.name|default:"Tutoring session" }}</strong><span>with {{ booking.teacher.user.get_full_name|default:booking.teacher.user.username }}</span><span>{{ booking.starts_at|date:"l, d F Y · h:i A" }} · {{ booking.duration_minutes }} min</span>{% if booking.meeting_link and booking.status == "confirmed" %}<a href="{{ booking.meeting_link }}" target="_blank" rel="noopener noreferrer">Join class</a>{% endif %}</div>
+      <span class="student-status {{ booking.status }}">{{ booking.get_status_display }}</span>
+      {% if booking.status == "pending" or booking.status == "confirmed" %}{% if booking.starts_at > now %}<form method="post" action="{% url 'cancel_student_booking' booking.pk %}">{% csrf_token %}<button class="student-text-button danger" type="submit">Cancel booking</button></form>{% endif %}{% endif %}
+    </article>{% empty %}<div class="student-empty"><i data-lucide="calendar-days" aria-hidden="true"></i><strong>No bookings yet</strong><p>Book a class with a teacher to see your schedule here.</p><a class="btn secondary" href="{% url 'find_tutor' %}">Find a teacher</a></div>{% endfor %}
+  </section>
+</section>
+{% endblock %}

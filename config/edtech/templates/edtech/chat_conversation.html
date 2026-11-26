@@ -1,0 +1,28 @@
+{% extends "edtech/base.html" %}
+{% block title %}Chat with {{ other_participant.get_full_name|default:other_participant.username }} — Tuition.com{% endblock %}
+{% block content %}
+<section class="teacher-editor chat-page">
+  <header class="editor-heading">
+    <div><span class="kicker">Private conversation</span><h1>{{ other_participant.get_full_name|default:other_participant.username }}</h1><p>{% if role == "student" %}Teacher{% else %}Student{% endif %}</p></div>
+    <a class="btn secondary" href="{% url 'chat_inbox' %}">All chats</a>
+  </header>
+  <section class="editor-section chat-thread" aria-label="Chat messages">
+    <div class="chat-message-list" aria-live="polite">
+      {% for chat_message in conversation_messages %}
+        <article class="chat-message {% if chat_message.sender_id == request.user.pk %}mine{% endif %}">
+          <div class="chat-message-meta"><strong>{{ chat_message.sender.get_full_name|default:chat_message.sender.username }}</strong><time datetime="{{ chat_message.created_at|date:'c' }}">{{ chat_message.created_at|date:"D, d M · h:i A" }}</time></div>
+          <p>{{ chat_message.body|linebreaksbr }}</p>
+        </article>
+      {% empty %}
+        <div class="student-empty compact"><p>This is the start of your conversation. Send a message to say hello.</p></div>
+      {% endfor %}
+    </div>
+    <form class="chat-compose" method="post">
+      {% csrf_token %}
+      <label for="chat-body">Your message</label>
+      <textarea id="chat-body" name="body" rows="3" maxlength="4000" required placeholder="Write a message…"></textarea>
+      <button class="btn primary" type="submit"><i data-lucide="send" aria-hidden="true"></i>Send message</button>
+    </form>
+  </section>
+</section>
+{% endblock %}

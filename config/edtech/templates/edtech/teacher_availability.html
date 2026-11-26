@@ -1,0 +1,20 @@
+{% extends "edtech/base.html" %}
+{% block title %}Manage teaching availability — Tuition.com{% endblock %}
+{% block content %}
+<section class="teacher-editor">
+  <header class="editor-heading"><div><span class="kicker">Booking schedule</span><h1>Your availability</h1><p>Students can request demos only within these future time windows.</p></div><a class="btn secondary" href="{% url 'dashboard' %}">Back to dashboard</a></header>
+  <section class="editor-section">
+    <h2>Add an available window</h2>
+    <form method="post" class="editor-form">{% csrf_token %}<input type="hidden" name="action" value="add_availability">
+      {{ form.non_field_errors }}
+      <div class="form-grid"><label>Starts{{ form.starts_at }}{{ form.starts_at.errors }}</label><label>Ends{{ form.ends_at }}{{ form.ends_at.errors }}</label></div>
+      <button class="btn primary" type="submit">Save availability</button>
+    </form>
+  </section>
+  <section class="editor-section">
+    <h2>Upcoming windows</h2>
+    {% for item in availability %}<article class="teacher-resource"><div><strong>{{ item.starts_at|date:"D, d M Y · h:i A" }}</strong><span>to {{ item.ends_at|date:"h:i A" }}</span></div><form method="post">{% csrf_token %}<input type="hidden" name="action" value="delete_availability"><input type="hidden" name="item_id" value="{{ item.pk }}"><button class="text-button danger" type="submit">Remove</button></form></article>
+    {% empty %}<p class="editor-empty">No upcoming availability saved. Add at least one window before students can book a demo.</p>{% endfor %}
+  </section>
+</section>
+{% endblock %}

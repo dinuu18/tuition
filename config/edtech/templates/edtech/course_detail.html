@@ -1,0 +1,41 @@
+{% extends "edtech/base.html" %}
+{% block title %}{{ course.title }} — Tuition.com{% endblock %}
+{% block content %}
+<section class="course-detail">
+  <div>
+    <span class="kicker">{{ course.subject.name }} · {{ course.level }}</span>
+    <h1>{{ course.title }}</h1>
+    <p>{{ course.description }}</p>
+    <div class="chips"><span>{{ course.language }}</span><span>{{ course.duration|default:"Flexible duration" }}</span></div>
+    <div class="profile-section"><h2>Learning outcomes</h2><p>{{ course.outcomes|default:"Detailed learning outcomes will be available here." }}</p></div>
+    {% if is_enrolled %}
+      <section class="student-course-lessons">
+        <div class="student-panel-heading"><div><span class="kicker">Your course workspace</span><h2>Lessons</h2></div><span>{{ enrollment.progress }}% complete</span></div>
+        {% for lesson in lessons %}
+          <article class="student-lesson-row">
+            <div class="student-lesson-number">{{ forloop.counter|stringformat:"02d" }}</div>
+            <div class="student-lesson-info"><h3>{{ lesson.title }}</h3>{% if lesson.duration %}<span>{{ lesson.duration }}</span>{% endif %}{% if lesson.content %}<p>{{ lesson.content|linebreaksbr }}</p>{% endif %}{% if lesson.video_url %}<a href="{{ lesson.video_url }}" target="_blank" rel="noopener noreferrer">Open lesson video</a>{% endif %}</div>
+            {% if lesson.pk in completed_lesson_ids %}<span class="student-lesson-done"><i data-lucide="circle-check" aria-hidden="true"></i> Completed</span>{% else %}<form method="post" action="{% url 'complete_lesson' course.pk lesson.pk %}">{% csrf_token %}<button class="btn secondary" type="submit">Mark complete</button></form>{% endif %}
+          </article>
+        {% empty %}<p class="muted">Your teacher has not added lessons to this course yet.</p>{% endfor %}
+      </section>
+    {% endif %}
+  </div>
+  <aside class="booking-card">
+    <h3>Course enrollment</h3>
+    <strong>₹{{ display_price }}</strong>
+    {% if is_enrolled %}
+      <button class="btn secondary full" disabled>Already Enrolled</button>
+    {% elif user.is_authenticated %}
+      <form method="post" action="{% url 'enroll_course' course.pk %}">
+        {% csrf_token %}
+        <input type="hidden" name="request_key" value="{{ payment_request_key }}">
+        <button class="btn primary full" type="submit">Enroll Now</button>
+      </form>
+    {% else %}
+      <a class="btn primary full" href="{% url 'login' %}">Login to Enroll</a>
+    {% endif %}
+    <a href="{% url 'public_teacher_profile' course.teacher.public_slug %}">View instructor</a>
+  </aside>
+</section>
+{% endblock %}

@@ -1,0 +1,49 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Tuition.com — Learn Today. Lead Tomorrow.{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'edtech/style.css' %}">
+  <link rel="stylesheet" href="{% static 'edtech/frontend-audit.css' %}">
+  <link rel="stylesheet" href="{% static 'edtech/teacher-profile.css' %}">
+  <link rel="stylesheet" href="{% static 'edtech/student-dashboard.css' %}?v=5">
+  <script src="{% static 'edtech/lucide.min.js' %}" defer></script>
+</head>
+<body class="dark">
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+  <nav class="navbar">
+    <a class="brand" href="{% url 'home' %}" aria-label="Tuition.com home"><span class="brand-mark" aria-hidden="true">T</span><strong>Tuition.com</strong></a>
+    <button class="nav-toggle" type="button" aria-label="Open navigation" aria-controls="primary-navigation" aria-expanded="false"><i data-lucide="menu" aria-hidden="true"></i></button>
+    <div class="nav-links" id="primary-navigation">
+      <a href="{% url 'find_tutor' %}">Find Tutor</a>
+      <a href="{% url 'subject_list' %}">Subjects</a>
+      <a href="{% url 'material_list' %}">Study Materials</a>
+      <button class="theme-toggle" type="button" aria-label="Switch to light theme" aria-pressed="true">
+        <span class="theme-toggle-icon"><i data-lucide="sun" aria-hidden="true"></i></span>
+        <span data-theme-label>Light theme</span>
+      </button>
+      {% if user.is_authenticated %}
+        <a href="{% url 'dashboard' %}">Dashboard</a>
+        <a class="nav-login" href="{% url 'logout' %}">Logout</a>
+      {% else %}
+        <a class="nav-login" href="{% url 'login' %}">Login</a>
+        <a class="nav-register" href="{% url 'register' role='student' %}">Join Free</a>
+      {% endif %}
+    </div>
+  </nav>
+  {% if messages %}<div class="toast-stack">{% for message in messages %}<div class="toast {{ message.tags }}"><i data-lucide="{% if 'success' in message.tags %}circle-check{% else %}circle-alert{% endif %}"></i>{{ message }}</div>{% endfor %}</div>{% endif %}
+  <main id="main-content">{% block content %}{% endblock %}</main>
+  <footer>
+    <div class="footer-grid">
+      <div><a class="brand footer-brand" href="{% url 'home' %}"><span class="brand-mark">T</span><strong>Tuition.com</strong></a><p>Live learning for ambitious students.</p></div>
+      <div><h4>Learn</h4><a href="{% url 'find_tutor' %}">Find a tutor</a><a href="{% url 'subject_list' %}">Subjects</a><a href="{% url 'material_list' %}">Resources</a></div>
+      <div><h4>Join</h4><a href="{% url 'register' role='student' %}">Student registration</a><a href="{% url 'register' role='teacher' %}">Become a teacher</a></div>
+      <div><h4>Support</h4><a href="{% url 'login' %}">Account help</a><a href="{% url 'material_list' %}">Study help</a></div>
+    </div>
+    <div class="footer-bottom">© 2026 Tuition.com. Built for learning.</div>
+  </footer>
+  <script src="{% static 'edtech/app.js' %}"></script>
+</body>
+</html>

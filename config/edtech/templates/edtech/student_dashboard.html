@@ -1,0 +1,76 @@
+{% extends "edtech/base.html" %}
+{% block title %}Student Dashboard — Tuition.com{% endblock %}
+{% block content %}
+<section class="student-dashboard">
+  <header class="student-hero">
+    <div><span class="kicker">Your learning, in one place</span><h1>Welcome back, {{ user.first_name|default:user.username }}.</h1><p>Keep your learning moving forward with your teachers, classes, and courses.</p></div>
+    <div class="student-hero-actions"><a class="btn secondary" href="{% url 'edit_profile' %}">Edit profile</a><a class="btn primary" href="{% url 'find_tutor' %}">Find a tutor</a></div>
+  </header>
+  <nav class="student-shortcuts" aria-label="Student dashboard">
+    <a class="active" href="{% url 'dashboard' %}"><i data-lucide="layout-dashboard" aria-hidden="true"></i>Overview</a>
+    <a href="{% url 'student_teachers' %}"><i data-lucide="users" aria-hidden="true"></i>My teachers</a>
+    <a href="{% url 'chat_inbox' %}"><i data-lucide="messages-square" aria-hidden="true"></i>Chats</a>
+    <a href="{% url 'student_bookings' %}"><i data-lucide="calendar-days" aria-hidden="true"></i>Bookings</a>
+    <a href="{% url 'student_notifications' %}"><i data-lucide="bell" aria-hidden="true"></i>Notifications{% if unread_notifications %}<span class="student-unread-count">{{ unread_notifications }}</span>{% endif %}</a>
+    <a href="{% url 'material_list' %}"><i data-lucide="library" aria-hidden="true"></i>Study materials</a>
+    <a href="{% url 'edit_profile' %}"><i data-lucide="settings" aria-hidden="true"></i>Profile & settings</a>
+  </nav>
+  <div class="student-stat-grid">
+    <article class="student-stat"><span class="student-stat-icon blue"><i data-lucide="book-open-check" aria-hidden="true"></i></span><strong>{{ enrollments.count }}</strong><span>Active courses</span></article>
+    <article class="student-stat"><span class="student-stat-icon pink"><i data-lucide="heart" aria-hidden="true"></i></span><strong>{{ favorites.count }}</strong><span>Saved teachers</span></article>
+    <article class="student-stat"><span class="student-stat-icon green"><i data-lucide="calendar-check-2" aria-hidden="true"></i></span><strong>{{ booking_count }}</strong><span>Total bookings</span></article>
+    <article class="student-stat"><span class="student-stat-icon amber"><i data-lucide="timer" aria-hidden="true"></i></span><strong>{{ study_hours }}h</strong><span>Completed class time</span></article>
+  </div>
+  <div class="student-dashboard-columns">
+    <section class="student-panel">
+      <div class="student-panel-heading"><div><span class="kicker">Stay on track</span><h2>Upcoming classes</h2></div><a href="{% url 'student_bookings' %}">All bookings <i data-lucide="arrow-up-right" aria-hidden="true"></i></a></div>
+      {% for booking in upcoming_bookings %}<article class="student-booking-row"><div class="student-date-tile"><strong>{{ booking.starts_at|date:"d" }}</strong><span>{{ booking.starts_at|date:"M" }}</span></div><div class="student-booking-info"><strong>{{ booking.subject.name|default:"Tutoring session" }}</strong><span>with {{ booking.teacher.user.get_full_name|default:booking.teacher.user.username }}</span><span>{{ booking.starts_at|date:"D, d M · h:i A" }}</span></div><span class="student-status {{ booking.status }}">{{ booking.get_status_display }}</span></article>
+      {% empty %}<div class="student-empty"><i data-lucide="calendar-plus" aria-hidden="true"></i><strong>No upcoming classes</strong><p>Find a teacher and request a lesson to get started.</p><a class="btn secondary" href="{% url 'find_tutor' %}">Explore teachers</a></div>{% endfor %}
+    </section>
+    <section class="student-panel">
+      <div class="student-panel-heading"><div><span class="kicker">Pick up where you left off</span><h2>My courses</h2></div><a href="{% url 'subject_list' %}">Explore courses <i data-lucide="arrow-up-right" aria-hidden="true"></i></a></div>
+      {% for enrollment in enrollments %}<a class="student-course-row" href="{% url 'course_detail' enrollment.course.pk %}"><span class="student-course-icon"><i data-lucide="graduation-cap" aria-hidden="true"></i></span><span class="student-course-detail"><strong>{{ enrollment.course.title }}</strong><span>{{ enrollment.course.subject.name }}</span><span class="student-progress-track" role="progressbar" aria-label="{{ enrollment.course.title }} progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ enrollment.progress }}"><b style="width:{{ enrollment.progress }}%"></b></span></span><strong class="student-course-percent">{{ enrollment.progress }}%</strong></a>
+      {% empty %}<div class="student-empty"><i data-lucide="library" aria-hidden="true"></i><strong>Your courses will appear here</strong><p>Browse courses taught by experienced tutors.</p><a class="btn secondary" href="{% url 'subject_list' %}">Browse subjects</a></div>{% endfor %}
+    </section>
+    <section class="student-panel">
+      <div class="student-panel-heading"><div><span class="kicker">Tailored to you</span><h2>Preferred subjects</h2></div><a href="{% url 'edit_profile' %}">Update preferences <i data-lucide="arrow-up-right" aria-hidden="true"></i></a></div>
+      <div class="student-subject-tags">{% for subject in preferred_subjects %}<a href="{% url 'subject_detail' subject.slug %}">{{ subject.name }}<i data-lucide="arrow-up-right" aria-hidden="true"></i></a>{% empty %}<div class="student-empty compact"><p>Add interests to your profile to personalize your learning.</p><a href="{% url 'edit_profile' %}">Set preferences</a></div>{% endfor %}</div>
+    </section>
+    <section class="student-panel">
+      <div class="student-panel-heading"><div><span class="kicker">Stay in the loop</span><h2>Messages & notifications</h2></div><a href="{% url 'student_notifications' %}">View notifications <i data-lucide="arrow-up-right" aria-hidden="true"></i></a></div>
+      <div class="student-chat-list">
+        <div class="student-chat-heading"><strong>Chats with teachers</strong><a href="{% url 'chat_inbox' %}">All chats</a></div>
+        {% for conversation in chat_conversations %}
+          <a class="student-chat-link" href="{% url 'chat_conversation' conversation.pk %}">
+            <span class="student-chat-avatar" aria-hidden="true">{{ conversation.teacher.user.first_name|slice:":1"|default:"T" }}</span>
+            <span><strong>{{ conversation.teacher.user.get_full_name|default:conversation.teacher.user.username }}</strong><small>Open conversation</small></span>
+            <i data-lucide="arrow-up-right" aria-hidden="true"></i>
+          </a>
+        {% empty %}
+          <div class="student-empty compact"><p>Start a conversation with one of your saved or connected teachers.</p><a href="{% url 'student_teachers' %}">My teachers</a></div>
+        {% endfor %}
+      </div>
+      {% for enquiry in enquiries %}
+        <article class="student-enquiry-preview">
+          <div class="student-enquiry-heading"><strong>{{ enquiry.teacher.user.get_full_name|default:enquiry.teacher.user.username }}</strong><time>{{ enquiry.created_at|timesince }} ago</time></div>
+          <p>{{ enquiry.message|truncatewords:18 }}</p>
+          {% if enquiry.reply_message %}
+            <div class="student-enquiry-reply"><strong>Teacher reply</strong><p>{{ enquiry.reply_message|linebreaksbr }}</p><time>{{ enquiry.replied_at|timesince }} ago</time></div>
+          {% else %}<span class="student-enquiry-waiting">Waiting for a teacher reply</span>{% endif %}
+        </article>
+      {% empty %}
+        <div class="student-empty compact"><p>Enquiries you send to teachers will appear here.</p><a href="{% url 'find_tutor' %}">Find a tutor</a></div>
+      {% endfor %}
+      {% for notification in notifications|slice:":3" %}<div class="student-notification-preview {% if not notification.read %}unread{% endif %}"><span class="notification-dot"></span><div><strong>{{ notification.title }}</strong><p>{{ notification.message|truncatewords:18 }}</p><time datetime="{{ notification.created_at|date:'c' }}">{{ notification.created_at|timesince }} ago</time></div></div>
+      {% empty %}<div class="student-empty compact"><p>Notifications about your learning will appear here.</p></div>{% endfor %}
+    </section>
+  </div>
+  <section class="student-panel student-material-panel">
+    <div class="student-panel-heading"><div><span class="kicker">Keep learning</span><h2>Recently added study materials</h2></div><a href="{% url 'material_list' %}">Browse library <i data-lucide="arrow-up-right" aria-hidden="true"></i></a></div>
+    <div class="student-material-grid">
+      {% for material in materials %}<article class="student-material-card"><span class="student-material-icon"><i data-lucide="file-text" aria-hidden="true"></i></span><div><strong>{{ material.title }}</strong><span>{{ material.subject.name }}{% if material.grade %} · {{ material.grade.name }}{% endif %}</span><p>{{ material.description|default:"Study resource"|truncatewords:14 }}</p></div>{% if material.external_url %}<a href="{{ material.external_url }}" target="_blank" rel="noopener noreferrer" aria-label="Open {{ material.title }} in a new tab"><i data-lucide="external-link" aria-hidden="true"></i></a>{% elif material.file %}<a href="{{ material.file.url }}" target="_blank" rel="noopener noreferrer" aria-label="Download {{ material.title }}"><i data-lucide="download" aria-hidden="true"></i></a>{% endif %}</article>
+      {% empty %}<div class="student-empty compact"><p>New learning resources will appear here.</p><a href="{% url 'material_list' %}">Explore study materials</a></div>{% endfor %}
+    </div>
+  </section>
+</section>
+{% endblock %}

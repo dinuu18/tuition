@@ -1,0 +1,42 @@
+{% extends "edtech/base.html" %}
+{% block title %}Teacher Dashboard — Tuition.com{% endblock %}
+{% block content %}
+<section class="dashboard">
+  <button class="dashboard-menu" type="button" aria-expanded="false" aria-controls="teacher-sidebar"><i data-lucide="panel-left" aria-hidden="true"></i><span>Menu</span></button>
+  <aside class="sidebar" id="teacher-sidebar">
+    <div class="student-mini">{% if user.profile.profile_picture %}<img class="profile-avatar" src="{{ user.profile.profile_picture.url }}" alt="">{% else %}<div class="profile-avatar" aria-hidden="true">{{ user.first_name|slice:":1"|default:"T" }}</div>{% endif %}<div><strong>{{ user.get_full_name|default:user.username }}</strong><span>Teacher{% if teacher.verified %} · Verified{% endif %}</span></div></div>
+    <a class="active" href="{% url 'dashboard' %}" aria-current="page"><i data-lucide="layout-dashboard" aria-hidden="true"></i> Overview</a>
+    <a href="{% url 'edit_profile' %}"><i data-lucide="user-cog" aria-hidden="true"></i> Manage profile</a>
+    <a href="{% url 'edit_profile' %}#subjects"><i data-lucide="book-open" aria-hidden="true"></i> Manage subjects</a>
+    <a href="{% url 'edit_profile' %}#experience"><i data-lucide="briefcase-business" aria-hidden="true"></i> Experience</a>
+    <a href="{% url 'edit_profile' %}#achievements"><i data-lucide="award" aria-hidden="true"></i> Achievements</a>
+    <a href="{% url 'teacher_enquiries' %}"><i data-lucide="messages-square" aria-hidden="true"></i> Student enquiries</a>
+    <a href="{% url 'chat_inbox' %}"><i data-lucide="message-circle" aria-hidden="true"></i> Chats</a>
+    <a href="{% url 'teacher_materials' %}"><i data-lucide="files" aria-hidden="true"></i> Study materials</a>
+    <a href="{% url 'teacher_availability' %}"><i data-lucide="calendar-clock" aria-hidden="true"></i> Availability</a>
+    <a href="{% url 'public_teacher_profile' teacher.public_slug %}" target="_blank" rel="noopener"><i data-lucide="external-link" aria-hidden="true"></i> Public profile</a>
+  </aside>
+  <div class="dashboard-main teacher-dashboard-main">
+    <div class="dashboard-heading"><div><span>Teacher workspace</span><h1>Welcome, {{ user.first_name|default:user.username }}</h1><p>Your teaching profile is ready to grow.</p></div><a class="btn primary" href="{% url 'edit_profile' %}">Manage profile</a></div>
+    <div class="widget-grid teacher-widget-grid">
+      <div class="widget"><i data-lucide="eye" aria-hidden="true"></i><strong>{{ profile_views }}</strong><span>Profile views</span></div>
+      <div class="widget"><i data-lucide="messages-square" aria-hidden="true"></i><strong>{{ enquiry_count }}</strong><span>Total enquiries</span></div>
+      <div class="widget"><i data-lucide="users" aria-hidden="true"></i><strong>{{ student_connections }}</strong><span>Student connections</span></div>
+      <div class="widget"><i data-lucide="chart-no-axes-column-increasing" aria-hidden="true"></i><strong>{{ profile_completion }}%</strong><span>Profile completion</span></div>
+      <div class="widget"><i data-lucide="wallet" aria-hidden="true"></i><strong>₹{{ earnings|floatformat:"0" }}</strong><span>Lifetime earnings</span></div>
+      <div class="widget"><i data-lucide="calendar-check" aria-hidden="true"></i><strong>{{ bookings.count }}</strong><span>Booking requests</span></div>
+      <div class="widget"><i data-lucide="graduation-cap" aria-hidden="true"></i><strong>{{ courses.count }}</strong><span>Courses</span></div>
+      <div class="widget"><i data-lucide="star" aria-hidden="true"></i><strong>{{ teacher.rating|floatformat:1 }}</strong><span>Average rating</span></div>
+    </div>
+    <div class="dashboard-grid">
+      <section class="panel"><div class="panel-heading"><h2>Student chats</h2><a href="{% url 'chat_inbox' %}">View all</a></div>{% for conversation in chat_conversations %}<a class="dashboard-chat-row" href="{% url 'chat_conversation' conversation.pk %}"><span><strong>{{ conversation.student.get_full_name|default:conversation.student.username }}</strong><small>Open conversation</small></span><i data-lucide="arrow-up-right" aria-hidden="true"></i></a>{% empty %}<div class="empty-state">Student conversations will appear here.</div>{% endfor %}</section>
+      <section class="panel"><div class="panel-heading"><h2>Booking requests</h2><a href="{% url 'edit_profile' %}">View profile</a></div>{% for booking in bookings %}<div class="list-row"><div><strong>{{ booking.student.get_full_name|default:booking.student.username }}</strong><span>{{ booking.starts_at|date:"D, d M · h:i A" }}</span></div><span class="status {{ booking.status }}">{{ booking.status }}</span></div>{% empty %}<div class="empty-state">No booking requests yet.</div>{% endfor %}</section>
+      <section class="panel"><div class="panel-heading"><h2>Student enquiries</h2><a href="{% url 'teacher_enquiries' %}">View inbox</a></div>{% for enquiry in enquiries %}<article class="dashboard-enquiry"><div><strong>{{ enquiry.name }}</strong><a href="mailto:{{ enquiry.email }}">{{ enquiry.email }}</a><time>{{ enquiry.created_at|date:"d M · h:i A" }}</time></div><p>{{ enquiry.message|linebreaksbr }}</p>{% if enquiry.reply_message %}<span class="dashboard-enquiry-status">Reply sent</span>{% else %}<a class="text-button" href="{% url 'teacher_enquiries' %}">Reply in inbox</a>{% endif %}</article>{% empty %}<div class="empty-state">No student enquiries yet.</div>{% endfor %}</section>
+      <section class="panel"><div class="panel-heading"><h2>Recent notifications</h2></div>{% for notification in notifications %}<div class="list-row notification-row"><div><strong>{{ notification.title }}</strong><span>{{ notification.message|truncatechars:90 }}</span></div><time>{{ notification.created_at|date:"d M" }}</time></div>{% empty %}<div class="empty-state">You’re all caught up. New updates will appear here.</div>{% endfor %}</section>
+      <section class="panel"><div class="panel-heading"><h2>My courses</h2></div>{% for course in courses %}<div class="list-row"><div><strong>{{ course.title }}</strong><span>{{ course.subject.name }}</span></div><strong>₹{{ course.price|floatformat:"0" }}</strong></div>{% empty %}<div class="empty-state">Create courses from the admin workspace.</div>{% endfor %}</section>
+      <section class="panel"><div class="panel-heading"><h2>Study materials</h2><a href="{% url 'teacher_materials' %}">Manage materials</a></div>{% for material in teacher_materials %}<div class="list-row"><div><strong>{{ material.title }}</strong><span>{{ material.subject.name }}{% if material.grade %} · {{ material.grade.name }}{% endif %}</span></div>{% if material.external_url %}<a href="{{ material.external_url }}" target="_blank" rel="noopener noreferrer">Open</a>{% elif material.file %}<a href="{{ material.file.url }}" target="_blank" rel="noopener noreferrer">Open</a>{% endif %}</div>{% empty %}<div class="empty-state">Share your first notes or learning resources.</div>{% endfor %}</section>
+      <section class="panel profile-promo"><span class="kicker">Your public profile</span><h2>Make your expertise easy to discover</h2><p>Share your profile link with students and keep your teaching information up to date.</p><code>{{ request.scheme }}://{{ request.get_host }}{% url 'public_teacher_profile' teacher.public_slug %}</code><a class="btn secondary" href="{% url 'public_teacher_profile' teacher.public_slug %}" target="_blank" rel="noopener">Preview public profile</a></section>
+    </div>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,39 @@
+{% extends "edtech/base.html" %}
+{% block title %}{{ teacher.user.get_full_name|default:teacher.user.username }} — Teacher profile{% endblock %}
+{% block content %}
+<section class="public-profile">
+  <div class="public-profile-main">
+    <div class="public-cover" {% if teacher.cover_image %}style="background-image:linear-gradient(90deg,rgba(15,23,42,.06),rgba(15,23,42,.02)),url('{{ teacher.cover_image.url }}')"{% endif %}></div>
+    <div class="public-intro">
+      {% if teacher.user.profile.profile_picture %}<img class="public-avatar" src="{{ teacher.user.profile.profile_picture.url }}" alt="{{ teacher.user.get_full_name }}">{% else %}<div class="public-avatar avatar-fallback" aria-hidden="true">{{ teacher.user.first_name|slice:":1"|default:"T" }}</div>{% endif %}
+      <div class="public-intro-copy"><div class="public-name"><h1>{{ teacher.user.get_full_name|default:teacher.user.username }}</h1>{% if teacher.verified %}<span class="verified-badge"><i data-lucide="badge-check" aria-hidden="true"></i> Verified teacher</span>{% endif %}</div>
+      <p class="public-headline">{{ teacher.headline|default:"Professional teacher" }}</p>
+      <div class="public-meta">{% if teacher.location %}<span><i data-lucide="map-pin" aria-hidden="true"></i>{{ teacher.location }}</span>{% endif %}<span><i data-lucide="star" aria-hidden="true"></i>{{ teacher.rating|floatformat:1 }} · {{ teacher.review_count }} reviews</span><span>{{ teacher.experience_years }} years teaching</span></div>
+      <div class="public-actions"><a class="btn primary" href="#enquiry">Send an enquiry</a>{% if user.is_authenticated and user.profile.role == "student" %}<form method="post" action="{% url 'favorite_teacher' teacher.pk %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.path }}"><button class="btn secondary" type="submit">{% if is_favorite %}Remove saved teacher{% else %}Save teacher{% endif %}</button></form>{% endif %}</div>
+    </div>
+    <section class="public-section"><h2>About</h2><p>{{ teacher.biography|default:"This teacher is preparing their professional profile."|linebreaksbr }}</p></section>
+    <section class="public-section"><h2>Subjects & expertise</h2>
+      {% for item in teacher.teaching_subjects.all %}<div class="public-detail-row"><div><strong>{{ item.subject.name }}</strong><span>{{ item.get_education_level_display }}{% if item.classes %} · {{ item.classes }}{% endif %}</span></div><div class="chips"><span>{{ item.get_teaching_mode_display }}</span><span>{{ item.experience_years }} years</span></div></div>{% empty %}
+      <div class="chips">{% for subject in teacher.subjects.all %}<span>{{ subject.name }}</span>{% empty %}<span>Subjects are being updated</span>{% endfor %}</div>{% endfor %}
+      {% if teacher.qualifications or teacher.college %}<div class="qualification-card"><i data-lucide="graduation-cap" aria-hidden="true"></i><div><strong>{{ teacher.qualifications|default:"Education & qualifications" }}</strong>{% if teacher.college %}<span>{{ teacher.college }}</span>{% endif %}</div></div>{% endif %}
+    </section>
+    {% if teacher.professional_experiences.exists %}<section class="public-section"><h2>Experience</h2>{% for item in teacher.professional_experiences.all %}<article class="timeline-item"><span class="timeline-mark"><i data-lucide="briefcase-business" aria-hidden="true"></i></span><div><h3>{{ item.job_title }}</h3><strong>{{ item.organization }} · {{ item.get_employment_type_display }}</strong><p class="muted">{{ item.start_date|date:"M Y" }} – {% if item.currently_working %}Present{% elif item.end_date %}{{ item.end_date|date:"M Y" }}{% endif %}</p>{% if item.responsibilities %}<p>{{ item.responsibilities|linebreaksbr }}</p>{% endif %}</div></article>{% endfor %}</section>{% endif %}
+    {% if teacher.achievements.exists %}<section class="public-section"><h2>Achievements & certifications</h2>{% for item in teacher.achievements.all %}<article class="recognition-item"><i data-lucide="award" aria-hidden="true"></i><div><h3>{{ item.title }}</h3>{% if item.certificate_name %}<strong>{{ item.certificate_name }}</strong>{% endif %}{% if item.issuing_organization %}<span>{{ item.issuing_organization }}{% if item.issue_date %} · {{ item.issue_date|date:"M Y" }}{% endif %}</span>{% endif %}{% if item.description %}<p>{{ item.description|linebreaksbr }}</p>{% endif %}{% if item.certificate_file %}<a href="{{ item.certificate_file.url }}" target="_blank" rel="noopener">View certificate</a>{% endif %}</div></article>{% endfor %}</section>{% endif %}
+    {% if teacher.skills.exists %}<section class="public-section"><h2>Skills & expertise</h2><div class="chips skill-chips">{% for skill in teacher.skills.all %}<span>{{ skill.name }}</span>{% endfor %}</div></section>{% endif %}
+    {% if teacher.portfolio_items.exists %}<section class="public-section"><h2>Teaching portfolio</h2><div class="portfolio-grid">{% for item in teacher.portfolio_items.all %}<article class="portfolio-card"><span class="kicker">{{ item.get_item_type_display }}</span><h3>{{ item.title }}</h3>{% if item.description %}<p>{{ item.description }}</p>{% endif %}{% if item.url %}<a href="{{ item.url }}" target="_blank" rel="noopener">Open resource ↗</a>{% endif %}{% if item.file %}<a href="{{ item.file.url }}" target="_blank" rel="noopener">View shared file ↗</a>{% endif %}</article>{% endfor %}</div></section>{% endif %}
+    <section class="public-section"><h2>Student reviews <span class="section-subtitle">{{ teacher.rating|floatformat:1 }} / 5 · {{ teacher.review_count }} reviews</span></h2>
+      {% for review in reviews %}<article class="review-item"><div class="rating" aria-label="{{ review.rating }} out of 5 stars">{% for star in "12345" %}{% if forloop.counter <= review.rating %}★{% else %}☆{% endif %}{% endfor %}<span>{{ review.created_at|date:"M Y" }}</span></div><strong>{{ review.student.get_full_name|default:review.student.username }}</strong>{% if review.comment %}<p>{{ review.comment }}</p>{% endif %}</article>{% empty %}<p class="muted">No student reviews yet.</p>{% endfor %}
+    </section>
+  </div>
+  <aside class="public-sidebar">
+    <div class="booking-card"><span class="kicker">Learn with this teacher</span><strong>₹{{ teacher.hourly_fee }}<small>/ hour</small></strong><div class="public-stat"><span>Total teaching experience</span><b>{{ teacher.experience_years }} years</b></div><div class="public-stat"><span>Students taught</span><b>{{ teacher.students_taught }}</b></div>
+      {% if teacher.user.email %}<a class="contact-link" href="mailto:{{ teacher.user.email }}"><i data-lucide="mail" aria-hidden="true"></i>{{ teacher.user.email }}</a>{% endif %}
+      {% if teacher.user.profile.phone %}<a class="contact-link" href="tel:{{ teacher.user.profile.phone }}"><i data-lucide="phone" aria-hidden="true"></i>{{ teacher.user.profile.phone }}</a>{% endif %}
+      {% if teacher.subjects.exists %}<a class="btn primary full" href="{% url 'book_demo' teacher.pk %}">Book a free demo</a>{% endif %}
+    </div>
+    <form class="booking-card enquiry-card" id="enquiry" method="post">{% csrf_token %}<span class="kicker">Get in touch</span><h2>Teaching enquiry</h2><p>Tell {{ teacher.user.first_name|default:"the teacher" }} what you’re looking for.</p>
+      <label>Your name<input name="name" value="{{ user.get_full_name|default:'' }}" maxlength="120" required></label><label>Email address<input name="email" type="email" value="{{ user.email|default:'' }}" required></label><label>Message<textarea name="message" rows="4" required placeholder="What subject or classes do you need help with?"></textarea></label><button class="btn primary full" type="submit">Send enquiry</button>
+    </form>
+  </aside>
+</section>
+{% endblock %}

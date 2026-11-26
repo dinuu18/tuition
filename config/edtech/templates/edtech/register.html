@@ -1,0 +1,24 @@
+{% extends "edtech/base.html" %}{% block title %}Join Tuition.com{% endblock %}{% block content %}
+<section class="auth-page">
+  <div class="auth-card wide">
+    <span class="kicker">{% if role == 'teacher' %}Teach with us{% else %}Start learning{% endif %}</span>
+    <h1>Create your {{ role }} account</h1>
+    <form method="post" novalidate>
+      {% csrf_token %}
+      <div class="form-grid">
+        <div><label for="register-first-name">First name</label><input id="register-first-name" name="first_name" autocomplete="given-name" required></div>
+        <div><label for="register-last-name">Last name</label><input id="register-last-name" name="last_name" autocomplete="family-name"></div>
+      </div>
+      <label for="register-username">Username</label><input id="register-username" name="username" autocomplete="username" required>
+      <label for="register-email">Email</label><input id="register-email" type="email" name="email" autocomplete="email" required>
+      <div class="form-grid">
+        <div><label for="register-password">Password</label><div class="password-field"><input id="register-password" name="password" type="password" autocomplete="new-password" required><button type="button" class="password-toggle" aria-label="Show password" aria-pressed="false"><i data-lucide="eye" aria-hidden="true"></i></button></div><span class="strength" id="strength" aria-live="polite"></span></div>
+        <div><label for="register-confirm">Confirm password</label><div class="password-field"><input id="register-confirm" name="confirm_password" type="password" autocomplete="new-password" required><button type="button" class="password-toggle" aria-label="Show password" aria-pressed="false"><i data-lucide="eye" aria-hidden="true"></i></button></div></div>
+      </div>
+      <p id="password-match" class="form-note" aria-live="polite"></p>
+      <button class="btn primary full" type="submit">Create Account</button>
+    </form>
+    <p>Already registered? <a href="{% url 'login' %}">Login</a></p>
+  </div>
+</section>
+{% endblock %}

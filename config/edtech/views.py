@@ -27,6 +27,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils import timezone
+from django.utils.text import slugify
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
@@ -74,7 +75,7 @@ def _notify_user(user, title, message, email_subject, email_body, reply_to=None)
 
 def home(request):
     return render(request, "edtech/home.html", {
-        "subjects": Subject.objects.filter(active=True)[:8],
+        "subjects": Subject.objects.filter(active=True).order_by("name"),
         "teachers": TeacherProfile.objects.filter(verified=True).select_related("user")[:6],
         "courses": Course.objects.filter(active=True).select_related("subject", "teacher", "teacher__user")[:6],
         "stats": {
@@ -1123,6 +1124,41 @@ def _manage_teacher_profile(request, teacher, profile):
                     messages.success(request, "Teaching subject saved.")
             else:
                 messages.error(request, "Please complete the subject details.")
+        elif action == "add_manual_subject":
+            subject_name = request.POST.get("subject_name", "").strip()
+            if not subject_name:
+                messages.error(request, "Enter a subject name.")
+            elif len(subject_name) > 100:
+                messages.error(request, "Subject names must be 100 characters or fewer.")
+            else:
+                subject = Subject.objects.filter(name__iexact=subject_name).first()
+                if subject and not subject.active:
+                    messages.error(request, "A subject with that name exists but is unavailable.")
+                elif subject and teacher.subjects.filter(pk=subject.pk).exists():
+                    messages.error(request, "That subject is already in My Subjects.")
+                else:
+                    if subject is None:
+                        base_slug = slugify(subject_name) or "subject"
+                        subject_slug = base_slug
+                        suffix = 2
+                        while Subject.objects.filter(slug=subject_slug).exists():
+                            subject_slug = f"{base_slug}-{suffix}"
+                            suffix += 1
+                        subject = Subject.objects.create(
+                            name=subject_name,
+                            slug=subject_slug,
+                            category="School",
+                        )
+                    teacher.subjects.add(subject)
+                    messages.success(request, f"{subject.name} added to My Subjects.")
+        elif action == "remove_manual_subject":
+            subject = teacher.subjects.filter(pk=request.POST.get("subject_id")).first()
+            if subject:
+                teacher.teaching_subjects.filter(subject=subject).delete()
+                teacher.subjects.remove(subject)
+                messages.success(request, f"{subject.name} removed from My Subjects.")
+            else:
+                messages.error(request, "That subject is not in My Subjects.")
         elif action in ("add_experience", "update_experience"):
             item = None
             if action == "update_experience":
@@ -1191,6 +1227,7 @@ def _manage_teacher_profile(request, teacher, profile):
         "teacher": teacher,
         "completion": teacher_profile_completion(teacher),
         "subject_form": TeacherSubjectForm(),
+        "manual_subjects": teacher.subjects.order_by("name"),
         "experience_form": TeacherExperienceForm(),
         "achievement_form": TeacherAchievementForm(),
         "portfolio_form": TeacherPortfolioForm(),
